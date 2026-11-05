@@ -1,0 +1,19 @@
+[Unit]
+Description=Inventory database coursework
+After=network.target mysql.service
+Requires=mysql.service
+
+[Service]
+# Create the course user and copy the code into /opt/course-inventory/code first.
+User=course
+WorkingDirectory=/opt/course-inventory/code
+EnvironmentFile=/etc/course-inventory.env
+Environment=ACCESS_LOG_DIR=/var/log/course-inventory
+LogsDirectory=course-inventory
+ExecStart=/opt/course-inventory/code/.venv/bin/gunicorn --workers 2 --threads 4 --bind 0.0.0.0:5001 --access-logfile - backend.app:create_app()
+Restart=on-failure
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

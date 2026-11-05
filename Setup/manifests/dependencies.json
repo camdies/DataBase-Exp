@@ -1,0 +1,24 @@
+{
+  "python": {
+    "version": "3.13.9",
+    "filename": "python-3.13.9-amd64.exe",
+    "urls": ["https://www.python.org/ftp/python/3.13.9/python-3.13.9-amd64.exe"],
+    "sha256": "200DDFF856BBFF949D2CC1BE42E8807C07538ABD6B6966D5113A094CF628C5C5",
+    "publisher": "Python Software Foundation"
+  },
+  "mysql": {
+    "version": "8.4.6",
+    "filename": "mysql-8.4.6-winx64.msi",
+    "urls": ["https://cdn.mysql.com/Downloads/MySQL-8.4/mysql-8.4.6-winx64.msi", "https://downloads.mysql.com/archives/get/p/23/file/mysql-8.4.6-winx64.msi"],
+    "sha256": "868885B2E221409F0170729BB30B2B2CE83440A1A4C735D19B3C225B51045762",
+    "publisher": "Oracle",
+    "source": "https://github.com/microsoft/winget-pkgs/blob/master/manifests/o/Oracle/MySQL/8.4.6/Oracle.MySQL.installer.yaml"
+  },
+  "vcredist": {
+    "version": "14.44.35211.0",
+    "filename": "VC_redist.x64-14.44.35211.exe",
+    "urls": ["https://download.visualstudio.microsoft.com/download/pr/73aabf2e-9532-4f68-99f7-3247081a619c/CC0FF0EB1DC3F5188AE6300FAEF32BF5BEEBA4BDD6E8E445A9184072096B713B/VC_redist.x64.exe"],
+    "sha256": "CC0FF0EB1DC3F5188AE6300FAEF32BF5BEEBA4BDD6E8E445A9184072096B713B",
+    "publisher": "Microsoft Corporation"
+  }
+}

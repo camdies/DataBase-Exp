@@ -1,0 +1,8 @@
+Flask>=3.0,<4
+SQLAlchemy>=2.0,<3
+PyMySQL[rsa]>=1.1,<2
+PyJWT>=2.8,<3
+bcrypt>=4.0,<6
+waitress>=3,<4
+gunicorn>=22,<24; sys_platform != 'win32'
+pytest>=8,<9
