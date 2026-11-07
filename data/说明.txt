@@ -1,0 +1,16 @@
+数据库课程作业1数据目录（2026-10-29核对）
+
+schema_mysql.sql：由code/backend/models.py生成的MySQL 8 DDL，8张InnoDB/utf8mb4表及订单客户时间复合索引。
+schema_sqlserver.sql：相同模型的SQL Server DDL参考，没有SQL Server运行验证。
+backup_mysql.sql：MySQL导出的仅数据初始备份；历史计数106005，业务运行后的计数可能不同。
+model.mmd：CLI生成的Mermaid关系图文本；文本可编辑，但编辑它不会修改Python模型或数据库。
+
+恢复只对新建空库操作，顺序为schema_mysql.sql、backup_mysql.sql。不要再次seed或重复导入。
+备份账号admin/clerk只有bcrypt哈希，需在自己的环境重置网页登录密码，数据库连接账号另行创建。
+
+code目录执行python -m tools.manage generate会覆盖本目录三份模型生成文件，不执行数据库DDL。
+网页/#/model的生成接口只在内存返回文本，不覆盖本目录。CLI显式表达订单至少一条明细的业务基数；网页由外键推导0..N结构基数，二者关系标签与SQL注释不同，不要求字节一致。
+
+数据生成的替代方式：新空库导入schema后，配置ADMIN_PASSWORD、CLERK_PASSWORD，执行python -m tools.manage seed；口令均须10–72个UTF-8字节。
+
+历史计数与恢复CHECKSUM见../doument/evidence。

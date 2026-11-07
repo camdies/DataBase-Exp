@@ -1,0 +1,56 @@
+erDiagram
+    account {
+        integer id PK
+        varchar username UK
+        varchar password_hash
+        varchar role
+    }
+    customer {
+        integer id PK
+        varchar name
+        varchar phone
+        varchar address
+    }
+    product {
+        integer id PK
+        varchar sku UK
+        varchar name
+        numeric price
+    }
+    warehouse {
+        integer id PK
+        varchar name UK
+    }
+    sales_order {
+        integer id PK
+        varchar request_key UK
+        integer customer_id FK
+        integer warehouse_id FK
+        integer created_by FK
+        varchar status
+        datetime created_at
+    }
+    stock {
+        integer warehouse_id PK,FK
+        integer product_id PK,FK
+        integer quantity
+    }
+    order_item {
+        integer order_id PK,FK
+        integer product_id PK,FK
+        integer quantity
+        numeric unit_price
+    }
+    shipment {
+        integer order_id PK,FK
+        varchar tracking_no UK
+        datetime shipped_at
+    }
+    account ||--o{ sales_order : creates
+    customer ||--o{ sales_order : places
+    warehouse ||--o{ sales_order : fulfills
+    sales_order ||--|{ order_item : contains
+    product ||--o{ order_item : sold_as
+    warehouse ||--o{ stock : holds
+    product ||--o{ stock : stocked_at
+    sales_order ||--o| shipment : ships
