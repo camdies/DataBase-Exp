@@ -1,6 +1,6 @@
 # 数据库课程作业1
 
-Windows 用户可从 `Setup/FirstRun.cmd` 完成首次安装与配置，随后使用 `Setup/Start.cmd`、`Setup/Stop.cmd`；`Setup/Manager.cmd` 提供环境检查修复、状态、重启、配置和诊断。Linux 使用 `bash Setup/linux/setup.sh` 首次配置，日常使用 `bash Setup/linux/manager.sh start --no-browser` 和 `stop`。详见 [Setup 使用说明](Setup/README.md) 与 [新手从零启动教程](Setup/新手从零启动教程.md)。安装工具只管理本课程应用，使用本机私有配置，不依赖外层教务项目。
+Windows 用户可从 `Setup/FirstRun.cmd` 完成首次安装与配置，随后使用 `Setup/Start.cmd`、`Setup/Stop.cmd`；`Setup/Manager.cmd` 提供环境检查修复、状态、重启、配置和诊断。Linux 使用 `bash Setup/linux/setup.sh` 首次配置，日常使用 `bash Setup/linux/manager.sh start --no-browser` 和 `stop`。详见 [Setup 使用说明](Setup/README.md) 与 [新手从零启动教程](从零启动教程.md)。安装工具只管理本课程应用，使用本机私有配置，不依赖外层教务项目。
 
 这是课程应用。前端包含总览、订单履约、商品与库存、模型与代码，登录嵌入工作台入口。关系模型包含 8 表；默认且唯一实测运行数据库为 MySQL 8。
 
@@ -33,3 +33,10 @@ gunicorn --workers 2 --threads 4 --bind 0.0.0.0:5001 'backend.app:create_app()'
 本项目不依赖原根目录 backend、frontend、便携 MySQL、嵌入 Python 或 config.ini。打包不包含 node_modules、虚拟环境、数据库物理文件、真实连接密码、Git 历史与软件工程扩展计划。
 
 提交清理建议详见 `SUBMISSION_GUIDE.md`，不要直接删除业务数据库或提交真实环境密钥。
+
+
+## 前端重新编译（2026-11-07）
+
+首次配置总会安装锁定的前端依赖并重新构建。单独构建前先停机：Windows 运行 `Setup/BuildFrontend.cmd`，Linux 在 code 中运行 `bash Setup/linux/manager.sh build-frontend`，成功后再 start。菜单选项10也可构建。快速启动不联网构建。构建失败保留旧页面；成功后旧产物保留在 frontend/dist-backup-*。检查会报告源码与构建记录不一致；CheckRepair 可选择重新构建。
+
+详细的 Windows、WSL 安装配置、Ubuntu 与 MySQL 指导见 [运行部署指南](运行部署指南_Windows_WSL_Ubuntu.md)。

@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('menu','first-run','check-repair','repair','check','start','stop','restart','status','configure','logs','diagnostics','install-mysql')]
+    [ValidateSet('menu','first-run','check-repair','repair','check','start','stop','restart','status','configure','logs','diagnostics','install-mysql','build-frontend')]
     [string]$Action = 'menu',
     [Parameter(ValueFromRemainingArguments=$true)][string[]]$ForwardArgs
 )

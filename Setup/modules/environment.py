@@ -18,7 +18,7 @@ def python_path():
 
 def repair():
     if sys.version_info < (3, 12):
-        raise cfg.SetupError('需要 Python 3.12 或更新版本，请运行 FirstRun.cmd。')
+        raise cfg.SetupError('需要 Python 3.12 或更新版本，Windows 请运行 FirstRun.cmd；Linux 请运行 bash Setup/linux/setup.sh。')
     venv = cfg.ROOT / '.venv'
     executable = python_path()
     venv_config = venv / 'pyvenv.cfg'
@@ -28,7 +28,7 @@ def repair():
         capture_output=True).returncode == 0
     if not usable:
         if Path(sys.prefix).resolve() == venv.resolve():
-            raise cfg.SetupError('当前虚拟环境已损坏，请关闭服务并通过 bootstrap.ps1 -Action repair 重建。')
+            raise cfg.SetupError('当前虚拟环境已损坏，请关闭服务并通过 Windows bootstrap.ps1 -Action repair 或 Linux manager.sh repair 重建。')
         if venv.exists():
             # Retain damaged environments for manual inspection, never recursively delete.
             venv.rename(cfg.ROOT / f'.venv-old-{time.time_ns()}')
@@ -62,9 +62,9 @@ def require_dependencies():
         raise cfg.SetupError('缺少依赖：' + ', '.join(missing) + '。请运行环境修复。')
 
 
-def check_assets():
+def check_assets(dist=None):
     from html.parser import HTMLParser
-    dist = cfg.ROOT / 'frontend/dist'
+    dist = Path(dist) if dist is not None else cfg.ROOT / 'frontend/dist'
     index = dist / 'index.html'
     if not index.is_file():
         raise cfg.SetupError('缺少 frontend/dist/index.html；请恢复交付产物或重建前端。')
@@ -116,6 +116,8 @@ def check():
             results.append({'item': name, 'ok': False, 'message': safe_error(exc)})
     item('Python / 依赖', require_dependencies)
     item('前端产物', check_assets)
+    from . import frontend
+    item('前端源码与构建记录', frontend.check_fresh)
     item('本机配置', lambda: (cfg.read_env(), cfg.settings()))
     item('日志目录 / 磁盘', lambda: check_log_dir(cfg.read_env()))
     item('MySQL / 表结构', lambda: database.verify(cfg.read_env()['DATABASE_URL']))

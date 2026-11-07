@@ -173,9 +173,11 @@ class SetupTests(unittest.TestCase):
         calls = []
         with patch.object(service, 'owned_process', return_value=None), \
                 patch.object(database, 'ensure_managed', side_effect=lambda: calls.append('start')), \
-                patch.object(database, 'verify', side_effect=lambda url: calls.append('verify')):
-            manager.configure(first=True)
-        self.assertEqual(calls, ['start', 'verify'])
+                patch.object(database, 'verify', side_effect=lambda url: calls.append('verify')), \
+                patch.object(manager.frontend, 'build', side_effect=lambda: calls.append('build')), \
+                patch.object(service, 'start', side_effect=lambda browser: calls.append(('web', browser))):
+            manager.configure(first=True, open_browser=False)
+        self.assertEqual(calls, ['build', 'start', 'verify', ('web', False)])
 
     def test_repair_rebuilds_venv_that_inherits_unrelated_system_packages(self):
         venv = self.root / '.venv'

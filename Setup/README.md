@@ -1,6 +1,6 @@
 # 课程系统安装与启动工具
 
-支持 Windows x64 与 Linux 服务端，数据库使用 MySQL。Linux 自动安装依赖面向 Ubuntu 24.04。脚本仅管理本课程版，不读取外层教务项目配置。正常运行使用已经交付的 frontend/dist，不需要 Node.js。先完整解压 `学号_姓名`，保留与 code 同级的 data 目录。零基础操作见 [新手从零启动教程](新手从零启动教程.md)。
+支持 Windows x64 与 Linux 服务端，数据库使用 MySQL。Linux 自动安装依赖面向 Ubuntu 24.04。脚本仅管理本课程版，不读取外层教务项目配置。首次配置会重新编译前端，并自动下载校验项目专用 Node.js 24.16.0；日常启动使用 frontend/dist。先完整解压 `学号_姓名`，保留与 code 同级的 data 目录。零基础操作见 [新手从零启动教程](../从零启动教程.md)。
 
 Linux 首次运行：`bash Setup/linux/setup.sh`；日常运行：`bash Setup/linux/manager.sh start --no-browser`，将 start 替换为 check、status、restart、stop、configure、diagnostics 可使用相应功能。整个脚本以普通用户运行，仅 apt 安装步骤使用 sudo。MySQL socket/PID 文件与数据目录均隔离。
 
@@ -8,9 +8,10 @@ Linux 首次运行：`bash Setup/linux/setup.sh`；日常运行：`bash Setup/li
 
 | 入口 | 功能 |
 |---|---|
-| FirstRun.cmd | 检测或安装 Python，创建 .venv、安装依赖，进入数据库配置向导 |
+| FirstRun.cmd | 准备 Python 与专用 Node.js，重新编译前端，配置或验证数据库并启动 |
+| BuildFrontend.cmd | 停机后重新编译前端；失败保留旧产物 |
 | Manager.cmd | 总菜单：配置、检查修复、启动、停机、重启、状态、日志、诊断 |
-| CheckRepair.cmd | 只读检查后，可选择修复项目 Python 环境；不会重建数据库 |
+| CheckRepair.cmd | 只读检查后，可选择重新构建前端和修复 Python 环境；不会重建数据库 |
 | Start.cmd | 后台启动、验证 HTTP 与数据库，打开浏览器；重复运行不创建第二个服务 |
 | Stop.cmd | 请求正常停机，等待在途请求及响应输出完成；不停止共享数据库 |
 
@@ -18,7 +19,7 @@ Linux 首次运行：`bash Setup/linux/setup.sh`；日常运行：`bash Setup/li
 
 ## 全新电脑配置
 
-1. 双击 FirstRun.cmd。需要联网下载运行时和 Python 依赖；Python 安装在当前用户目录，MySQL 与 VC++ 运行库安装可能需要 UAC 管理员授权。不依赖 winget。无需安装 Git、PyCharm 或 Node.js。
+1. 双击 FirstRun.cmd。需要联网下载运行时和 Python 依赖；Python 安装在当前用户目录，MySQL 与 VC++ 运行库安装可能需要 UAC 管理员授权。不依赖 winget。无需手动安装 Git、PyCharm 或 Node.js；工具自动准备项目专用 Node.js。
 2. 选择数据库方式：
    - **连接已有库**：填写应用账户，验证现有业务表。不会重设密码或导入数据。
    - **已有 MySQL 上创建新库**：临时输入具有建库、导入及创建账户权限的管理账户；只创建不存在的新库和新账户。
@@ -26,7 +27,7 @@ Linux 首次运行：`bash Setup/linux/setup.sh`；日常运行：`bash Setup/li
 3. 创建新库时设置应用数据库密码及网页 admin/clerk 密码（网页密码10–72 UTF-8字节）。自动导入 `data/schema_mysql.sql`、`data/backup_mysql.sql`，逐表核对106005行初始数据，重设网页密码，创建只有 SELECT/INSERT/UPDATE/DELETE 权限的应用账户。账户来源限制为初始化连接实际来源，不使用通配来源。远程数据库后续更换后端机器时需要调整账户来源授权。
 4. 选择网页端口和本机/局域网模式。生成随机 JWT 密钥并保存私有配置，完成真实连接和页面检查后启动。
 
-已有有效 .env 时 FirstRun 只验证，不重复导入或重设密码；通过菜单“修改配置”调整连接与端口。无效配置可在明确选择后备份到私有目录并重建。正常重启不会轮换密钥。
+已有有效 .env 时 FirstRun 重新编译、验证并启动，不重复导入或重设密码；通过菜单“修改配置”调整连接与端口。无效配置可在明确选择后备份到私有目录并重建。正常重启不会轮换密钥。
 
 ## 命令行
 
@@ -65,7 +66,7 @@ Linux 首次运行：`bash Setup/linux/setup.sh`；日常运行：`bash Setup/li
 - 端口冲突：菜单修改端口。工具不结束占用端口的其他程序。
 - SQL 导入中断：install-state.json 标记 `needs-review`，部分数据库保留。MySQL DDL 不能整体回滚。检查并修复该库后选择“连接已有库”，或使用新的库名重新初始化。工具没有删库、强制覆盖或重复灌数选项。
 - 专用 MySQL 首次初始化中断：mysql.json 保留 `initializing` 状态和实例位置，后续拒绝自动重试。检查实例 initialize.log / mysql-error.log；如启动后尚未完成 root 改密，先停掉记录中的专用进程。需要重建时保留该实例目录与 mysql.json 的私有备份，然后移走这份 mysql.json，重新执行首次配置创建独立的新实例；不复用部分初始化的数据目录。
-- 前端文件缺失：恢复交付产物，或自行安装合适 Node.js 后在 frontend 执行 `npm.cmd ci`、`npm.cmd run build`。正常启动不会联网安装前端依赖。
+- 前端文件缺失：恢复交付产物，或停机后运行 BuildFrontend.cmd / `bash Setup/linux/manager.sh build-frontend`。正常启动不会联网安装前端依赖。
 - 正常停机超时：等待在途请求完成，再检查状态；确需强制停机时显式使用 `stop --force`。
 
 ## 运行时来源与范围
@@ -84,3 +85,12 @@ python -m pytest tests/ -v
 ```
 
 tests/test_setup_mysql.py 创建随机命名的临时数据库和账户，验证真实备份导入、密码、权限、重复导入拒绝与部分失败保留，完成后只清理自身创建的对象。测试不能作为首次配置中的“修复”操作。
+
+
+## 前端重新编译（2026-11-07）
+
+首次配置总会安装锁定的前端依赖并重新构建。单独构建前先停机：Windows 运行 `Setup/BuildFrontend.cmd`，Linux 在 code 中运行 `bash Setup/linux/manager.sh build-frontend`，成功后再 start。菜单选项10也可构建。快速启动不联网构建。构建失败保留旧页面；成功后旧产物保留在 frontend/dist-backup-*。检查会报告源码与构建记录不一致；CheckRepair 可选择重新构建。
+
+详细的 Windows、WSL 安装配置、Ubuntu 与 MySQL 指导见 [运行部署指南](../运行部署指南_Windows_WSL_Ubuntu.md)。
+
+Node.js 固定版本24.16.0，安装到 Setup/.local/runtimes，SHA256来自 https://nodejs.org/dist/v24.16.0/SHASUMS256.txt ，摘要固定在 modules/frontend.py。支持Windows x64、Linux x64/arm64；不修改系统PATH，不执行远程shell安装脚本。离线时需预置匹配平台的校验通过归档和npm缓存；未准备缓存的全新电脑需要联网。

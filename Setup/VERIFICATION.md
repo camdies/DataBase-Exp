@@ -1,4 +1,20 @@
-# Setup 首版验证记录
+# Setup 验证记录
+
+## 2026-11-07 前端构建与部署流程
+
+- 最终全量测试：Windows 54通过、1项POSIX测试跳过；Ubuntu24.04 / WSL2 55通过。真实MySQL测试使用已有隔离测试实例与独立测试库，未操作业务库。
+- 两端通过真实入口执行 build-frontend、check、start、重复start、status、restart、diagnostics、stop、stop --with-database、已有配置first-run --no-browser及最终停机。首次配置重新编译后实际启动成功，不重复灌数。
+- Windows自动下载并校验Node.js24.16.0；Linux直接下载遇到URLError，npm直接联网遇到ECONNRESET，随后通过Windows准备官方Linux归档及匹配锁文件的npm缓存，在Linux执行摘要校验、npm离线安装和实际生产构建成功。没有关闭TLS或绕过完整性校验。不能据此宣称当前WSL直接联网安装通过。
+- 回归覆盖构建失败保留旧产物、替换失败回滚、源码变化检测、运行中拒绝构建、资源缺失、下载摘要错误拒绝执行、构建失败不进入数据库初始化、已有配置启动与no-browser参数，以及Python修复后使用新解释器继续构建。
+- PowerShell解析、Linux shell语法、Python编译、文档本地链接与git diff --check通过。前端仍有大于500kB的Element Plus资源块警告，构建成功。
+- 测试完成后已关闭测试Web服务及专用数据库。保留私有测试配置与缓存供复核，不应随交付包分享。
+- 尚未执行：干净Windows上的UAC/运行时安装、从零安装WSL、Ubuntu系统apt安装、独立Ubuntu虚拟机与真实局域网双机验收、Linux ARM64实机测试。Linux自动系统安装仍限定Ubuntu24.04；Node归档支持不代表所有Linux发行版均完成验收。
+- Windows全流程验证后补充的检查修复分支及下载错误提示，由最终全量测试覆盖；Linux最终全流程使用最终代码。项目主目录未覆盖已有frontend/dist，构建均在测试副本进行。
+
+证据：[Windows最终测试](../../doument/evidence/setup-20261107/windows/tests.txt)、[Windows流程](../../doument/evidence/setup-20261107/windows/result.json)、[Linux最终测试](../../doument/evidence/setup-20261107/linux/tests.txt)、[Linux流程](../../doument/evidence/setup-20261107/linux/result.json)。完整本机过程记录在 D:/DataBase-Exp/tmp/setup-build-20261107，Windows最终补测在同级 setup-build-20261107-final-tests。
+
+以下保留历史记录，各日期的范围与限制分别适用。
+
 
 ## 2026-11-05 跨平台补充
 

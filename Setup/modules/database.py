@@ -153,6 +153,10 @@ def find_mysqld():
         candidates = sorted(base.glob('MySQL Server */bin/mysqld.exe'), reverse=True)
         if candidates:
             return candidates[0]
+    if os.name != 'nt':
+        for name in ('/usr/sbin/mysqld', '/usr/local/mysql/bin/mysqld'):
+            if Path(name).is_file() and os.access(name, os.X_OK):
+                return Path(name)
     return None
 
 

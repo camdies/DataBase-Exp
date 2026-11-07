@@ -10,7 +10,7 @@ if __package__ in (None, ''):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from Setup.modules import configuration as cfg
-from Setup.modules import database, diagnostics, environment, service
+from Setup.modules import database, diagnostics, environment, service, frontend
 
 
 def ask(label, default=None):
@@ -46,9 +46,11 @@ def connection(database_required=True):
     return database.url_for(host, number, user, secret, name)
 
 
-def configure(first=False):
+def configure(first=False, open_browser=True):
     if service.owned_process(service.record()):
         raise cfg.SetupError('请先停止 Web 服务，再修改配置。')
+    if first:
+        frontend.build()
     current = None
     if (cfg.ROOT / '.env').exists():
         try:
@@ -65,7 +67,8 @@ def configure(first=False):
         if settings['database_mode'] == 'managed':
             database.ensure_managed()
         database.verify(current['DATABASE_URL'])
-        print('现有数据库验证通过。可使用 Start.cmd 或 bash Setup/linux/manager.sh start。')
+        service.start(open_browser)
+        print('现有配置验证与前端构建完成。')
         return
     choice = ask('数据库方式：1=连接已有库，2=已有 MySQL 上创建新库，3=本机专用 MySQL' +
                  ('，0=保留连接' if current else ''), '0' if current else '3')
@@ -80,9 +83,10 @@ def configure(first=False):
         if choice == '3':
             if not database.managed_record() and not database.find_mysqld():
                 if os.name != 'nt':
-                    raise cfg.SetupError('请先安装 MySQL，或选择连接已有实例。')
-                print('需要下载并安装 MySQL Server 与 VC++ 运行库；系统可能显示 UAC。')
-                subprocess.run(['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
+                    subprocess.run(['bash', str(cfg.ROOT / 'Setup/linux/install-mysql.sh')], check=True)
+                else:
+                    print('需要下载并安装 MySQL Server 与 VC++ 运行库；系统可能显示 UAC。')
+                    subprocess.run(['powershell.exe', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
                                 str(cfg.ROOT / 'Setup/bootstrap.ps1'), '-Action', 'install-mysql'], check=True)
             admin_url = database.ensure_managed()
         else:
@@ -111,7 +115,7 @@ def configure(first=False):
     cfg.save_json(cfg.LOCAL / 'install-state.json', {'phase': 'configured'})
     print('配置已保存。JWT 密钥保留在本机；正常重启不会重新生成。')
     if first:
-        service.start()
+        service.start(open_browser)
 
 
 def check():
@@ -136,14 +140,25 @@ def execute(args):
         return check()
     if action == 'check-repair':
         check_result = check()
-        if ask('修复 Python 依赖？数据库和配置不会被覆盖（y/N）', 'N').lower() == 'y':
-            # Re-run in the repaired interpreter so imported packages are fresh.
+        rebuild = ask('重新编译前端并准备构建环境？（y/N）', 'N').lower() == 'y'
+        repair_python = ask('修复 Python 依赖？数据库和配置不会被覆盖（y/N）', 'N').lower() == 'y'
+        if repair_python:
             with cfg.operation_lock():
                 if service.owned_process(service.record()):
                     raise cfg.SetupError('请先停止服务。')
                 environment.repair()
+            # Always continue in the repaired interpreter, including frontend work.
+            if rebuild:
+                result = subprocess.run([str(environment.python_path()), str(Path(__file__).resolve()),
+                                         'build-frontend'], cwd=cfg.ROOT)
+                if result.returncode:
+                    return result.returncode
             return subprocess.run([str(environment.python_path()), str(Path(__file__).resolve()), 'check'],
                                   cwd=cfg.ROOT).returncode
+        if rebuild:
+            with cfg.operation_lock():
+                frontend.build()
+            return check()
         return check_result
     environment.require_dependencies()
     if action == 'status':
@@ -155,7 +170,9 @@ def execute(args):
     else:
         with cfg.operation_lock():
             if action in ('first-run', 'configure'):
-                configure(first=action == 'first-run')
+                configure(first=action == 'first-run', open_browser=not args.no_browser)
+            elif action == 'build-frontend':
+                frontend.build()
             elif action == 'start':
                 service.start(not args.no_browser)
             elif action == 'stop':
@@ -170,7 +187,7 @@ def execute(args):
 
 def menu():
     options = {'1': 'first-run', '2': 'check-repair', '3': 'start', '4': 'stop',
-               '5': 'restart', '6': 'status', '7': 'configure', '8': 'logs', '9': 'diagnostics'}
+               '5': 'restart', '6': 'status', '7': 'configure', '8': 'logs', '9': 'diagnostics', '10': 'build-frontend'}
     while True:
         if environment.python_path().is_file() and Path(sys.prefix).resolve() != (cfg.ROOT / '.venv').resolve():
             return subprocess.run([str(environment.python_path()), str(Path(__file__).resolve()), 'menu'],
@@ -180,6 +197,7 @@ def menu():
               '[3] 快速启动        [4] 快速停机\n'
               '[5] 重启服务        [6] 查看运行状态\n'
               '[7] 修改配置        [8] 查看日志位置\n'
+              '[10] 重新编译前端\n'
               '[9] 导出诊断报告    [0] 退出菜单（不停止服务）')
         choice = ask('选择', '0')
         if choice == '0':
@@ -206,7 +224,7 @@ def main():
         sys.stdout.reconfigure(encoding='utf-8')
     parser = argparse.ArgumentParser(description='课程系统安装与服务管理')
     parser.add_argument('action', nargs='?', default='menu', choices=['menu', 'first-run', 'configure',
-                        'check', 'check-repair', 'repair', 'start', 'stop', 'restart', 'status', 'logs', 'diagnostics', '_serve'])
+                        'build-frontend', 'check', 'check-repair', 'repair', 'start', 'stop', 'restart', 'status', 'logs', 'diagnostics', '_serve'])
     parser.add_argument('--force', action='store_true', help='正常停机超时后强制停止已核验的 Web 进程')
     parser.add_argument('--no-browser', action='store_true')
     parser.add_argument('--with-database', action='store_true', help='停机时同时正常关闭本项目专用数据库')

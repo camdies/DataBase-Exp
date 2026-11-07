@@ -7,3 +7,6 @@ node_modules/
 runtime_logs/
 Setup/.local/
 .venv-old-*/
+
+.frontend-build-*/
+frontend/dist-backup-*/
